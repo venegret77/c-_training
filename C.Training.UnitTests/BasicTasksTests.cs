@@ -1,6 +1,4 @@
-﻿using Xunit;
-
-namespace C.Training;
+﻿namespace C.Training.UnitTests;
 
 public class BasicTasksTests
 {
