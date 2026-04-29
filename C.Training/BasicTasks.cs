@@ -7,7 +7,7 @@ public static class BasicTasks
     // Никаких параметров нет, просто вернуть нужный текст.
     public static string SayHello()
     {
-        throw new NotImplementedException();
+        return "Привет, я учу C#!";
     }
 
     // ЗАДАЧА 2:
@@ -17,7 +17,7 @@ public static class BasicTasks
     // Используй интерполяцию строк ($"...").
     public static string FormatPerson(string name, int age)
     {
-        throw new NotImplementedException();
+        return $"Меня зовут {name}, мне {age}";
     }
 
     // ЗАДАЧА 3:
@@ -25,7 +25,7 @@ public static class BasicTasks
     // Ничего сложнее, чем a + b, тут не требуется.
     public static int Sum(int a, int b)
     {
-        throw new NotImplementedException();
+        return a + b;
     }
 
     // ЗАДАЧА 4:
@@ -33,7 +33,7 @@ public static class BasicTasks
     // Пример: 4 -> 16
     public static int Square(int number)
     {
-        throw new NotImplementedException();
+        return number * number;
     }
 
     // ЗАДАЧА 5:
@@ -42,7 +42,7 @@ public static class BasicTasks
     // Подсказка: используй оператор %
     public static bool IsEven(int number)
     {
-        throw new NotImplementedException();
+        return number % 2 == 0;
     }
 
     // ЗАДАЧА 6:
@@ -52,6 +52,12 @@ public static class BasicTasks
     // Если n = 0, вернуть 0.
     public static int SumToN(int n)
     {
-        throw new NotImplementedException();
+        var sum = 0;
+        for (var i = 0; i <= n; i++)
+        {
+            sum += i;
+        }
+
+        return sum;
     }
 }
