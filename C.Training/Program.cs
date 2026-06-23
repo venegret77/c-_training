@@ -1,22 +1,80 @@
-﻿using C.Training;
+﻿Console.WriteLine("Hello this is Rock Paper Scissors");
+Console.WriteLine("Enter your step");
 
-TryWriteLine(nameof(BasicTasks.SayHello), () => BasicTasks.SayHello());
-TryWriteLine(nameof(BasicTasks.FormatPerson), () => BasicTasks.FormatPerson("Михаил", 25));
-TryWriteLine(nameof(BasicTasks.Sum), () => BasicTasks.Sum(2, 3));
-TryWriteLine(nameof(BasicTasks.Square), () => BasicTasks.Square(4));
-TryWriteLine(nameof(BasicTasks.IsEven), () => BasicTasks.IsEven(4));
-TryWriteLine(nameof(BasicTasks.IsEven), () => BasicTasks.IsEven(5));
-TryWriteLine(nameof(BasicTasks.SumToN), () => BasicTasks.SumToN(5));
 
-static void TryWriteLine<T>(string name, Func<T> func)
+var userWon = false;
+
+while (userWon == false)
 {
-    try
+    Console.Clear();
+    
+    Console.WriteLine("1 - Rock");
+    Console.WriteLine("2 - Paper");
+    Console.WriteLine("3 - Scissors");
+    Console.WriteLine("0 - Exit");
+    
+    var userInput = Console.ReadLine(); // "5"
+
+    int userChoice;
+
+    // parse user input = string into int 
+    // put result to out result param
+    // return if parse was successful
+
+    if (!int.TryParse(userInput, out userChoice) || !(userChoice >= 0 && userChoice <= 3))
     {
-        var result = func();
-        Console.WriteLine($"{name} => {result}");
+        Console.WriteLine("Invalid input");
+        continue;
     }
-    catch (Exception ex)
+
+    if (userChoice == 0)
     {
-        Console.WriteLine($"{name} => ERROR: {ex.GetType().Name} - {ex.Message}");
+        return;
     }
+
+    var random = new Random();
+    var computerChoice = random.Next(1, 4); // generate random number 1-3
+
+    string userChoiceString;
+    switch (userChoice)
+    {
+        case 1:
+            Console.WriteLine("Rock");
+            userChoiceString = "Rock";
+            break;
+        case 2:
+            userChoiceString = "Paper";
+            break;
+        default:
+            userChoiceString = "Scissors";
+            break;
+    }
+
+    Console.WriteLine($"You chose {userChoiceString}");
+
+    string computerChoiceString = computerChoice switch
+    {
+        1 => "Rock",
+        2 => "Paper",
+        _ => "Scissors"
+    };
+
+    Console.WriteLine($"Computer chose {computerChoiceString}");
+
+    if (computerChoice == userChoice)
+    {
+        Console.WriteLine("Draw");
+    }
+    else if (userChoice == 1 && computerChoice == 3 || userChoice == 2 && computerChoice == 1 ||
+             userChoice == 3 && computerChoice == 2)
+    {
+        Console.WriteLine("You win");
+        userWon = true;
+    }
+    else
+    {
+        Console.WriteLine("You lose");
+    }
+
+    // Ctrl + K + D 
 }
