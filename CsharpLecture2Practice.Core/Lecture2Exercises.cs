@@ -42,9 +42,14 @@ public static class Lecture2Exercises
     /// </summary>
     public static bool TryParseUserChoice(string? input, out int choice)
     {
-        // TODO: реализуй (смотри Examples/01_TryParse.cs)
-        choice = 0;
-        return false;
+        var parseResult = int.TryParse(input, out choice);
+        if (parseResult == false)
+            return false;
+        if (choice >= 0 && choice <= 3)
+            return true;
+        else
+            return false;
+
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -66,7 +71,15 @@ public static class Lecture2Exercises
     /// </summary>
     public static string? ChoiceToString(int choice)
     {
-        // TODO: реализуй (смотри Examples/02_SwitchAndIfElse.cs)
+        switch (choice)
+        {
+          case 1:
+              return "rock";
+          case 2:
+              return "paper";
+          case 3:
+              return "scissors";
+        }
         return null;
     }
 
@@ -84,7 +97,14 @@ public static class Lecture2Exercises
     /// </summary>
     public static string GetRoundResultText(int userChoice, int computerChoice)
     {
-        // TODO: реализуй через if-else (смотри Examples/02_SwitchAndIfElse.cs)
+        if (userChoice == computerChoice)
+            return "Draw";
+        else if ((userChoice == 1 && computerChoice == 3) || (userChoice == 2 && computerChoice == 1) || 
+                 (userChoice == 3 && computerChoice == 2))
+            return "You win";
+        else
+            return "You lose";
+        
         return string.Empty;
     }
 
@@ -103,8 +123,12 @@ public static class Lecture2Exercises
     /// </summary>
     public static int SumNumbers(int[] numbers)
     {
-        // TODO: реализуй через foreach
-        return 0;
+        int summ = 0;
+        foreach (int zahl in numbers)
+        {
+            summ = summ + zahl;
+        }
+        return summ;
     }
 
     /// <summary>
@@ -115,7 +139,12 @@ public static class Lecture2Exercises
     /// </summary>
     public static int[] GetEvenNumbers(int[] numbers)
     {
-        // TODO: реализуй через foreach
+        int summ = 0;
+        foreach (int zahl in numbers)
+        {
+            if (zahl % 2 == 0)
+                summ = summ + zahl;
+        }
         return [];
     }
 
@@ -134,8 +163,16 @@ public static class Lecture2Exercises
     /// </summary>
     public static int CountMultiples(int[] numbers, int divisor)
     {
-        // TODO: реализуй через for
-        return 0;
+       int zahl = numbers.Length;
+       int summ = 0;
+       for (int erste = 0; erste < zahl; erste++)
+       {
+           if (numbers[erste] % divisor == 0)
+           {
+               summ++;
+           }
+       }
+        return summ;
     }
 
     /// <summary>
@@ -146,8 +183,12 @@ public static class Lecture2Exercises
     /// </summary>
     public static int[] BuildSequence(int count)
     {
-        // TODO: реализуй через for
-        return [];
+        int[] numbers = new int[count];
+        for (int erste = 0; erste < numbers.Length; erste++)
+        {
+            numbers[erste] = erste;
+        }
+        return numbers;
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -163,10 +204,15 @@ public static class Lecture2Exercises
     /// Где писать: тело метода. Результат — long.
     ///   0! = 1    5! = 120    10! = 3628800
     /// </summary>
-    public static long Factorial(int n)
+    public static int Factorial(int n)
     {
-        // TODO: реализуй через while
-        return 0;
+        int number = 1;
+        int a = 1;
+        for (number = 1; number <= 5; number++)
+        {
+            a = a * number;
+        }
+        return a;
     }
 
     /// <summary>

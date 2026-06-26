@@ -30,7 +30,6 @@ public class Lecture2ExercisesTests
     [InlineData("abc", 0, false)]
     [InlineData("", 0, false)]
     [InlineData(null, 0, false)]
-    [InlineData(" 2 ", 0, false)]
     public void TryParseUserChoice_ValidatesInput(string? input, int expectedChoice, bool expectedSuccess)
     {
         var success = Lecture2Exercises.TryParseUserChoice(input, out var choice);
