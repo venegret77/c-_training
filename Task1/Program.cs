@@ -12,3 +12,5 @@
 
 // так можно взять случайное число
 var randomNumber = Random.Shared.Next(1, 11);
+
+Console.WriteLine("Задача 1.");
