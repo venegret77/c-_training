@@ -11,6 +11,27 @@
 // если больше — подскажи "Загаданное число меньше"
 
 // так можно взять случайное число
+
+/*int chislo = 0;
+while (true)
+{
+    Console.WriteLine("Введите число от 1 до 4");
+    var first = Console.ReadLine();
+    bool two = int.TryParse(first, out chislo);
+    if (two == true && (chislo > 0 && chislo < 5))
+    {
+        break;
+    }
+    else
+    {
+        Console.Clear();
+        Console.WriteLine("Неверный ввод");
+    }
+}
+
+Console.WriteLine($" Это {chislo}");*/
+
+
 var randomNumber = Random.Shared.Next(1, 11);
 
 Console.WriteLine("Введите число от 1 до 10");

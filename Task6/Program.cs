@@ -1,70 +1,56 @@
-﻿/*Создай класс Person (человек) с тремя полями:
+﻿// ============================================================
+// ЗАДАЧА 6: Угадай число
+// Что учим: циклы, условия, TryParse
+// ============================================================
+// Программа загадывает число от 1 до 10.
+// Пользователь вводит число с клавиатуры.
+// Нужно проверить что введено число и оно от 1 до 10.
+// Игра продолжается пока пользователь не угадает.
+// если угадал — поздравь и напиши что выйграли.
+// если меньше — подскажи "Загаданное число больше"
+// если больше — подскажи "Загаданное число меньше"
 
-Name (имя, string)
-Age (возраст, int)
-City (город, string)
+// ВАЖНОЕ ОТЛИЧИЕ, НУЖНО СОЗДАТЬ МЕТОД ОТДАЮЩИЙ ВАЛИДНОЕ ЧИСЛО КОТОРОЕ ДОЛЖЕН ВВЕСТИ ПОЛЬЗОВАТЕЛЬ
+// СДЕЛАТЬ ЧЕРЕЗ while(true)
+// int GetValidUserNumber(){}
 
-Сделай конструктор который заполняет все три поля. Потом создай объект и выведи его данные*/
+// так можно взять случайное число
 
-using Task6;
+var computerNumber = Random.Shared.Next(1, 11);
 
-class Person
+Console.WriteLine("Введите число от 1 до 10"); // Выводит пользователю сообщение
+
+int Number()
 {
-    public string Name;
-    public int Age;
-    public string City;
-
-    public Person(string name, int age, string city)
+    while (true)
     {
-        Name = name;
-        Age = age;
-        City = city;
+        var userInput = Console.ReadLine();
+        bool isValidNumber = int.TryParse(userInput, out int userNumber);
+        if (isValidNumber == false || userNumber < 1 || userNumber > 10)
+        {
+            Console.WriteLine("Неверный ввод. Попробуйте еще раз");
+        }
+        else
+        {
+            return userNumber;
+        } 
     }
 }
-Person germanperson = new Person ("Wilhelm", 83, "Quedlinburg");
-Console.WriteLine(germanperson.Name);
-Console.WriteLine(germanperson.Age);
-Console.WriteLine (germanperson.City); 
-
-/*Создай класс Book с полями:
-
-Title (название, string)
-Author (автор, string)
-Year (год, int)
-
-Конструктор заполняет все поля. Создай объект книги и выведи данные.*/
-
-class Book
+while (true)
 {
-    public string Title;
-    public string Autor;
-    public int Year;
-
-    public Book(string title, string autor, int year)
+    int userNumber = Number();
+    if (userNumber == computerNumber)
     {
-        Title = title;
-        Autor = autor;
-        Year = year;
+        Console.WriteLine("Вы выиграли!");
+        break;
+    }
+    else if (userNumber > computerNumber)
+    {
+        Console.WriteLine("Загаданное число меньше");
+    }
+    else
+    {
+        Console.WriteLine("Загаданное число больше");
     }
 }
-Book buch = new Book ("Faust", "Goete", 1783);
-Console.WriteLine(buch.Title);
-Console.WriteLine(buch.Autor);
-Console.WriteLine(buch.Year);
 
-/*Создай класс Product с полями:
-
-Name (название, string)
-Price (цена, decimal)
-Quantity (количество, int)
-
-Конструктор заполняет поля. Создай два разных продукта и выведи их данные.*/
-
-Product dildo = new Product ("Dildo Harry Potter", 134.2m, 4);
-Console.WriteLine(dildo.Name);
-Console.WriteLine(dildo.Price);
-Console.WriteLine(dildo.Quantity);
-Product rukkola = new Product ("Rukkola Hujukkola", 1.45m, 10);
-Console.WriteLine(rukkola.Name);
-Console.WriteLine(rukkola.Price);
-Console.WriteLine(rukkola.Quantity);
