@@ -1,15 +1,7 @@
 ﻿using C.Training;
 
-var game = new Game(); // object of type (class) Game
+var player = new Player("You");
+var computer = new Player("Computer");
+var game = new Game(player, computer, 5);
 
-game.RoundsToPlay = 5;
 game.Play();
-
-if (game.UserWon)
-{
-    Console.WriteLine("You won");
-}
-else
-{
-    Console.WriteLine("You lost");
-}

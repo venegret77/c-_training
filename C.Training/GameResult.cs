@@ -19,4 +19,12 @@ public class GameResult
         Console.WriteLine($"Computer: {ComputerMove.Name}");
         Console.WriteLine(ResultText);
     }
+
+    public void Print(int roundNumber)
+    {
+        Console.WriteLine($"Round {roundNumber}");
+        Console.WriteLine($"You: {PlayerMove.Name}");
+        Console.WriteLine($"Computer: {ComputerMove.Name}");
+        Console.WriteLine(ResultText);
+    }
 }
