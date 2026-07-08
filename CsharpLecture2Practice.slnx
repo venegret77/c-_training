@@ -1,6 +1,7 @@
 <Solution>
   <Project Path="CsharpLecture2Practice.Core/CsharpLecture2Practice.Core.csproj" />
   <Project Path="CsharpLecture2Practice.Tests/CsharpLecture2Practice.Tests.csproj" />
+  <Project Path="RPG/RPG.csproj" />
   <Project Path="Task1/Task1.csproj" />
   <Project Path="Task10/Task10.csproj" />
   <Project Path="Task11/Task11.csproj" />
