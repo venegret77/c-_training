@@ -38,8 +38,13 @@
 Добавить в лечение правило: нельзя вылечить выше максимума, и нельзя лечить мёртвого героя — «его уже не спасти».*/
 
 
+using System.Security.Principal;
 using RPG;
 
+Random random = new Random();
+double wound = random.Next(1, 11);
+double heal = random.Next(1, 11);
+int person = random.Next(0, 4);
 Hero [] heroes = new Hero [4];
 heroes [0] = new Hero ("Warrior", "Minsk", 200, 20);
 heroes [1] = new Hero ("Thief", "Artemis", 150,15);
@@ -65,12 +70,42 @@ while (true)
   {
   case 1:
       Console.WriteLine("Показать весь отряд");
+      foreach (var hero in heroes)
+      {
+          bool live = hero.IsAlive();
+          var status = live ? "Жив" : "Мертв";
+          Console.WriteLine($"Класс:{hero.Role}, Имя:{hero.Name}, Hp: {hero.Hp}, Урон:{hero.Damage}, Статус: {status}"); 
+          }
       break;
   case 2:
       Console.WriteLine("Нанести урон герою");
+      double Healthpoint(double wound, Hero hero)
+      {
+          if (hero.Hp >= wound)
+          {
+              return hero.Hp - wound;
+          }
+          else
+          {
+              Console.WriteLine($"Герой {hero.Name} мертв!");
+              return 0;
+          }
+      }
+      var randomHero = heroes[person];
+      double remainderHp = Healthpoint(wound, randomHero);
+      randomHero.Hp = remainderHp;
+      Console.WriteLine($"Персонаж {randomHero.Name} получает урон {wound}! Его HP = {remainderHp}");
       break;
   case 3:
       Console.WriteLine("Лечить героя");
+      double Heilpoint(double heal, Hero hero)
+      {
+          return hero.Hp + heal;
+      }
+      var randomHero2 = heroes[person];
+      double healHp = Heilpoint(heal, randomHero2);
+      randomHero2.Hp = healHp;
+      Console.WriteLine($"Персонаж {randomHero2.Name} исцеляется на {heal}! Его Hp = {healHp}");
       break;
   case 4:
       Console.WriteLine("Выход");
