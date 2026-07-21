@@ -2,15 +2,20 @@
 {
     public static void Main()
     {
-        var shipPosition = new Position(2, 1);
-        var ship = new Ship(shipPosition, 2);
-        var board = new Board(5, 5, ship);
-        var game = new Game();
-        game.Play(board);
+        var settings = new GameSettings(minShipLength: 1, maxShipLength: 3);
+        var ships = new Ship[]
+        {
+            new HorizontalShip(new Position(0, 0), 2),
+            new VerticalShip(new Position(2, 2), 3),
+        };
+        var board = new Board(5, 5, ships);
+        IPlayer human = new HumanPlayer("Игрок", board);
+        var game = new Game(settings);
+        game.Play(human);
     }
 }
 
-class Position
+readonly struct Position
 {
     public int X { get; }
     public int Y { get; }
@@ -27,15 +32,28 @@ class Position
     public override string ToString() => $"({X}, {Y})";
 }
 
-class Ship
+enum ShootResult
 {
+    Miss,
+    Hit
+}
+
+record Shot(Board Board, Position Position, Ship? Ship)
+{
+    public ShootResult Result => Ship is null ? ShootResult.Miss : ShootResult.Hit;
+}
+
+abstract class Ship
+{
+    private readonly List<Shot> _hits = new();
+
     public Position Position { get; }
     public int Length { get; }
+    public IReadOnlyList<Shot> Hits => _hits;
+    public bool IsSunk => _hits.Count >= Length;
 
-    public Ship(Position position, int length)
+    protected Ship(Position position, int length)
     {
-        if (position == null)
-            throw new ArgumentNullException(nameof(position));
         if (length <= 0)
             throw new ArgumentException("Длина корабля должна быть положительной", nameof(length));
 
@@ -43,45 +61,100 @@ class Ship
         Length = length;
     }
 
-    public override string ToString() => $"Корабль в {Position}, длина {Length}";
+    public abstract bool IsOnPosition(Position position);
+
+    public abstract bool Intersects(Ship other);
+
+    public void AddHit(Shot shot) => _hits.Add(shot);
+
+    public override string ToString() => $"{GetType().Name} в {Position}, длина {Length}";
+}
+
+class HorizontalShip : Ship
+{
+    public HorizontalShip(Position position, int length) : base(position, length)
+    {
+    }
+
+    public override bool IsOnPosition(Position position)
+    {
+        return position.X == Position.X
+               && position.Y >= Position.Y
+               && position.Y < Position.Y + Length;
+    }
+
+    public override bool Intersects(Ship other)
+    {
+        for (var i = 0; i < Length; i++)
+        {
+            var position = new Position(Position.X, Position.Y + i);
+            if (other.IsOnPosition(position))
+                return true;
+        }
+
+        return false;
+    }
+}
+
+class VerticalShip : Ship
+{
+    public VerticalShip(Position position, int length) : base(position, length)
+    {
+    }
+
+    public override bool IsOnPosition(Position position)
+    {
+        return position.Y == Position.Y
+               && position.X >= Position.X
+               && position.X < Position.X + Length;
+    }
+
+    public override bool Intersects(Ship other)
+    {
+        for (var i = 0; i < Length; i++)
+        {
+            var position = new Position(Position.X + i, Position.Y);
+            if (other.IsOnPosition(position))
+                return true;
+        }
+
+        return false;
+    }
 }
 
 class Board
 {
     public int Rows { get; }
     public int Columns { get; }
-    public IReadOnlyList<Ship> Ships { get; }
+    public Ship[] Ships { get; }
 
-    public Board(int rows, int columns, IEnumerable<Ship> ships)
+    public Board(int rows, int columns, Ship[] ships)
     {
         if (rows <= 0 || columns <= 0)
             throw new ArgumentException($"Некорректный размер доски: {rows}x{columns}");
 
-        if (ships == null)
-            throw new ArgumentNullException(nameof(ships));
-
-        var shipList = ships.ToList();
-        if (shipList.Count == 0)
+        if (ships is null || ships.Length == 0)
             throw new ArgumentException("На доске должен быть хотя бы один корабль");
 
         Rows = rows;
         Columns = columns;
 
-        foreach (var s in shipList)
+        foreach (var ship in ships)
         {
-            if (s.Position.X < 0 || s.Position.Y < 0 ||
-                s.Position.X + s.Length - 1 >= rows || s.Position.Y >= columns)
+            if (!IsShipInside(ship))
+                throw new ArgumentException($"Корабль {ship} выходит за пределы поля {rows}x{columns}");
+        }
+
+        for (var i = 0; i < ships.Length; i++)
+        {
+            for (var j = i + 1; j < ships.Length; j++)
             {
-                throw new ArgumentException(
-                    $"Корабль {s} выходит за пределы поля {rows}x{columns}");
+                if (ships[i].Intersects(ships[j]))
+                    throw new ArgumentException($"Корабли пересекаются: {ships[i]} и {ships[j]}");
             }
         }
 
-        Ships = shipList;
-    }
-
-    public Board(int rows, int columns, Ship ship) : this(rows, columns, new[] { ship })
-    {
+        Ships = ships;
     }
 
     public bool IsInside(Position position)
@@ -91,189 +164,254 @@ class Board
 
     public Ship? FindShip(Position position)
     {
-        return Ships.FirstOrDefault(ship =>
-            position.Y == ship.Position.Y &&
-            position.X >= ship.Position.X &&
-            position.X < ship.Position.X + ship.Length);
+        return Ships.FirstOrDefault(ship => ship.IsOnPosition(position));
+    }
+
+    private bool IsShipInside(Ship ship)
+    {
+        var cellsOnBoard = 0;
+        for (var x = 0; x < Rows; x++)
+        {
+            for (var y = 0; y < Columns; y++)
+            {
+                if (ship.IsOnPosition(new Position(x, y)))
+                    cellsOnBoard++;
+            }
+        }
+
+        return cellsOnBoard == ship.Length;
     }
 }
 
-class Shot
+class GameSettings
 {
-    public Board Board { get; }
-    public Position Position { get; }
-    public Ship? Ship { get; }
+    public int MinShipLength { get; }
+    public int MaxShipLength { get; }
 
-    public Shot(Board board, Position position, Ship? ship)
+    public GameSettings(int minShipLength, int maxShipLength)
     {
-        Board = board ?? throw new ArgumentNullException(nameof(board));
-        Position = position ?? throw new ArgumentNullException(nameof(position));
-        Ship = ship;
+        if (minShipLength <= 0)
+            throw new ArgumentException("Минимальная длина корабля должна быть положительной", nameof(minShipLength));
+        if (maxShipLength < minShipLength)
+            throw new ArgumentException("Максимальная длина не может быть меньше минимальной", nameof(maxShipLength));
+
+        MinShipLength = minShipLength;
+        MaxShipLength = maxShipLength;
+    }
+}
+
+static class RandomExtensions
+{
+    public static Ship NextShip(this Random random, GameSettings settings, int rows, int columns)
+    {
+        var length = random.Next(settings.MinShipLength, settings.MaxShipLength + 1);
+        var isHorizontal = random.Next(2) == 0;
+
+        if (isHorizontal)
+        {
+            if (length > columns)
+                throw new ArgumentException($"Корабль длины {length} не помещается на поле шириной {columns}");
+
+            var x = random.Next(0, rows);
+            var y = random.Next(0, columns - length + 1);
+            return new HorizontalShip(new Position(x, y), length);
+        }
+
+        if (length > rows)
+            throw new ArgumentException($"Корабль длины {length} не помещается на поле высотой {rows}");
+
+        var verticalX = random.Next(0, rows - length + 1);
+        var verticalY = random.Next(0, columns);
+        return new VerticalShip(new Position(verticalX, verticalY), length);
+    }
+}
+
+interface IShooter
+{
+    Shot Shoot(Board targetBoard);
+}
+
+interface IPlayer : IShooter
+{
+    string Name { get; }
+    Board Board { get; }
+}
+
+class HumanPlayer : IPlayer
+{
+    public string Name { get; }
+    public Board Board { get; }
+
+    public HumanPlayer(string name, Board board)
+    {
+        Name = name;
+        Board = board;
     }
 
-    public bool IsHit => Ship != null;
+    public Shot Shoot(Board targetBoard)
+    {
+        var x = ReadCoordinate("X");
+        var y = ReadCoordinate("Y");
+        var position = new Position(x, y);
+        var ship = targetBoard.FindShip(position);
+        return new Shot(targetBoard, position, ship);
+    }
+
+    private static int ReadCoordinate(string coordinateName)
+    {
+        Console.WriteLine($"Введите координату {coordinateName}:");
+        var input = Console.ReadLine();
+        if (!int.TryParse(input, out var coordinate))
+            throw new FormatException($"Некорректный ввод координаты {coordinateName}");
+
+        return coordinate;
+    }
+}
+
+class ComputerPlayer : IPlayer
+{
+    private readonly Random _random = new();
+
+    public string Name { get; }
+    public Board Board { get; }
+
+    public ComputerPlayer(string name, Board board)
+    {
+        Name = name;
+        Board = board;
+    }
+
+    public Shot Shoot(Board targetBoard)
+    {
+        var position = new Position(_random.Next(0, targetBoard.Rows), _random.Next(0, targetBoard.Columns));
+        var ship = targetBoard.FindShip(position);
+        return new Shot(targetBoard, position, ship);
+    }
 }
 
 class Game
 {
-    public int UserHitsCount { get; private set; }
-    public int ComputerHitsCount { get; private set; }
+    public GameSettings Settings { get; }
     public List<Shot> Shots { get; } = new();
 
-    public void Play(Board board)
+    public Game(GameSettings settings)
     {
-        var opponentBoard = GenerateOpponentBoard(board.Rows, board.Columns);
-        var random = new Random();
-        var boards = new[] { board, opponentBoard };
+        Settings = settings ?? throw new ArgumentNullException(nameof(settings));
+    }
 
-        var roundCount = 0;
+    public void Play(IPlayer player)
+    {
+        var opponentBoard = GenerateOpponentBoard(player.Board);
+        IPlayer opponent = new ComputerPlayer("Компьютер", opponentBoard);
+
         while (true)
         {
-            Position userShotPosition;
+            var playerShot = TakeShot(player, opponent.Board);
+            PrintShotResult(player.Name, playerShot);
+
+            var opponentShot = TakeShot(opponent, player.Board);
+            PrintShotResult(opponent.Name, opponentShot);
+
+            Console.WriteLine();
+            Console.WriteLine($"Доска {player.Name}:");
+            PrintBoard(player.Board, revealShips: true);
+
+            Console.WriteLine($"Доска {opponent.Name}:");
+            PrintBoard(opponent.Board, revealShips: false);
+
+            var sunkOnPlayerBoard = player.Board.Ships.Count(ship => ship.IsSunk);
+            var sunkOnOpponentBoard = opponent.Board.Ships.Count(ship => ship.IsSunk);
+            Console.WriteLine($"Потопленных кораблей у {player.Name}: {sunkOnPlayerBoard}");
+            Console.WriteLine($"Потопленных кораблей у {opponent.Name}: {sunkOnOpponentBoard}");
+            Console.WriteLine();
+
+            if (opponent.Board.Ships.All(ship => ship.IsSunk))
+            {
+                Console.WriteLine($"Победитель: {player.Name}!");
+                break;
+            }
+
+            if (player.Board.Ships.All(ship => ship.IsSunk))
+            {
+                Console.WriteLine($"Победитель: {opponent.Name}!");
+                break;
+            }
+        }
+    }
+
+    private Shot TakeShot(IPlayer shooter, Board targetBoard)
+    {
+        while (true)
+        {
             try
             {
-                if (!TryReadFromConsole("X", roundCount, out var xPosition))
-                    continue;
-                Console.WriteLine();
-                if (!TryReadFromConsole("Y", roundCount, out var yPosition))
-                    continue;
+                var shot = shooter.Shoot(targetBoard);
 
-                userShotPosition = new Position(xPosition, yPosition);
+                if (!targetBoard.IsInside(shot.Position))
+                    throw new ArgumentOutOfRangeException(nameof(shot.Position), "Позиция выстрела за пределами доски!");
+
+                if (Shots.Any(existing => existing.Board == targetBoard && existing.Position.Equals(shot.Position)))
+                    throw new InvalidOperationException("В эту клетку уже стреляли!");
+
+                Shots.Add(shot);
+                shot.Ship?.AddHit(shot);
+                return shot;
             }
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
-                continue;
             }
-
-            Shot userShot;
-            try
-            {
-                userShot = MakeShot(opponentBoard, userShotPosition);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-                continue;
-            }
-
-            if (userShot.IsHit)
-            {
-                Console.WriteLine("Hit!");
-                UserHitsCount++;
-            }
-            else
-            {
-                Console.WriteLine("Miss!");
-            }
-
-            var computerShot = MakeComputerShot(board, random);
-            Console.WriteLine($"Computer shoots at {computerShot.Position}");
-
-            if (computerShot.IsHit)
-            {
-                Console.WriteLine("Computer hit!");
-                ComputerHitsCount++;
-            }
-            else
-            {
-                Console.WriteLine("Computer missed!");
-            }
-
-            Console.WriteLine($"Score - You: {UserHitsCount}, Computer: {ComputerHitsCount}");
-            Console.WriteLine();
-
-            PrintStatistics(board, "вашей доске (обороне)");
-            PrintStatistics(opponentBoard, "доске противника (атаке)");
-            Console.WriteLine();
-
-            roundCount++;
         }
     }
 
-    private Shot MakeShot(Board targetBoard, Position position)
+    private static void PrintShotResult(string shooterName, Shot shot)
     {
-        if (!targetBoard.IsInside(position))
-            throw new ArgumentOutOfRangeException(nameof(position), "Позиция выстрела за пределами доски!");
-
-        if (Shots.Any(s => s.Board == targetBoard && s.Position.X == position.X && s.Position.Y == position.Y))
-            throw new InvalidOperationException("Вы уже стреляли в эту клетку!");
-
-        var ship = targetBoard.FindShip(position);
-        var shot = new Shot(targetBoard, position, ship);
-        Shots.Add(shot);
-        return shot;
+        Console.WriteLine($"{shooterName} стреляет в {shot.Position}");
+        Console.WriteLine(shot.Result == ShootResult.Hit ? "Попадание!" : "Мимо!");
     }
 
-    private Shot MakeComputerShot(Board targetBoard, Random random)
+    private void PrintBoard(Board board, bool revealShips)
     {
-        while (true)
+        for (var x = 0; x < board.Rows; x++)
         {
-            var position = new Position(random.Next(0, targetBoard.Rows), random.Next(0, targetBoard.Columns));
-            try
+            for (var y = 0; y < board.Columns; y++)
             {
-                return MakeShot(targetBoard, position);
+                var position = new Position(x, y);
+                var shot = Shots.FirstOrDefault(s => s.Board == board && s.Position.Equals(position));
+
+                char cell;
+                if (shot is not null)
+                    cell = shot.Result == ShootResult.Hit ? 'X' : 'O';
+                else if (revealShips && board.FindShip(position) is not null)
+                    cell = 'S';
+                else
+                    cell = '.';
+
+                Console.Write(cell);
+                Console.Write(' ');
             }
-            catch (InvalidOperationException)
-            {
-            }
+
+            Console.WriteLine();
         }
     }
 
-    private void PrintStatistics(Board targetBoard, string boardName)
-    {
-        var shotsOnBoard = Shots.Where(s => s.Board == targetBoard).ToList();
-
-        var totalShots = shotsOnBoard.Count;
-        var hitsCount = shotsOnBoard.Count(s => s.IsHit);
-        var missesCount = shotsOnBoard.Count(s => !s.IsHit);
-        var hasMiss = shotsOnBoard.Any(s => !s.IsHit);
-        var firstHit = shotsOnBoard.FirstOrDefault(s => s.IsHit);
-        var hitCoordinates = shotsOnBoard.Where(s => s.IsHit).Select(s => s.Position).ToList();
-
-        Console.WriteLine($"--- Статистика по {boardName} ---");
-        Console.WriteLine($"Всего выстрелов: {totalShots}");
-        Console.WriteLine($"Попаданий: {hitsCount}");
-        Console.WriteLine($"Промахов: {missesCount}");
-        Console.WriteLine($"Был хотя бы один промах: {(hasMiss ? "да" : "нет")}");
-        Console.WriteLine(firstHit != null
-            ? $"Первое попадание: {firstHit.Position}"
-            : "Первое попадание: ещё не было");
-        Console.WriteLine(hitCoordinates.Count > 0
-            ? $"Координаты попаданий: {string.Join(", ", hitCoordinates)}"
-            : "Координаты попаданий: нет");
-
-        foreach (var ship in targetBoard.Ships)
-        {
-            var shipHits = Shots.Count(s => s.Board == targetBoard && s.Ship == ship);
-            var isSunk = shipHits >= ship.Length;
-            Console.WriteLine($"{ship}: попаданий {shipHits}/{ship.Length} — {(isSunk ? "потоплен" : "на плаву")}");
-        }
-    }
-
-    private Board GenerateOpponentBoard(int rows, int columns)
+    private Board GenerateOpponentBoard(Board userBoard)
     {
         var random = new Random();
-        var length = random.Next(1, 4);
-        var x = random.Next(0, rows - length + 1);
-        var y = random.Next(0, columns);
+        var ships = new List<Ship>();
 
-        var position = new Position(x, y);
-        var ship = new Ship(position, length);
-
-        return new Board(rows, columns, ship);
-    }
-
-    private bool TryReadFromConsole(string coordinateName, int roundCount, out int coordinate)
-    {
-        Console.WriteLine($"Input your {coordinateName} coordinate for round {roundCount}:");
-        var input = Console.ReadLine();
-        if (!int.TryParse(input, out coordinate))
+        for (var i = 0; i < userBoard.Ships.Length; i++)
         {
-            Console.WriteLine("Invalid input");
-            return false;
+            Ship candidate;
+            do
+            {
+                candidate = random.NextShip(Settings, userBoard.Rows, userBoard.Columns);
+            }
+            while (ships.Any(existing => existing.Intersects(candidate)));
+
+            ships.Add(candidate);
         }
 
-        return true;
+        return new Board(userBoard.Rows, userBoard.Columns, ships.ToArray());
     }
 }
